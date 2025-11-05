@@ -32,7 +32,6 @@ async function run() {
     const bidsCollection = db.collection("bids");
     const userCollecton = db.collection("users");
 
-
     // Users Apis
     app.post("/users", async (req, res) => {
       const newUser = req.body;
@@ -49,16 +48,29 @@ async function run() {
       }
     });
 
-
     // Products apis
     app.get("/products", async (req, res) => {
-      console.log(req.query)
-      const email = req.query.email
-      const query = {}
-      if(email) {
-        query.email = email
+      console.log(req.query);
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.email = email;
       }
-      const cursor = productsCollection.find(query).sort({created_at: -1});
+      const cursor = productsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+
+    app.get('/products/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id : id};
+      const result = await productsCollection.findOne(query);
+      res.send(result)
+    })
+
+    app.get("/latest-products", async (req, res) => {
+      const cursor = productsCollection.find().sort({ created_at: -1 }).limit(6);
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -69,17 +81,10 @@ async function run() {
       res.send(result);
     });
 
-    app.get('latest-products', async(req, res) => {
-      const cursor = productsCollection.find();
-      const result = await cursor.toArray();
-      res.send(result)
-    })
-
-
     app.patch("/products/:id", async (req, res) => {
       const id = req.params.id;
       const updatedProduct = req.body;
-      const query = { _id: new ObjectId(id) };
+      const query = { _id: id };
       const update = {
         $set: updatedProduct,
       };
@@ -88,7 +93,7 @@ async function run() {
     });
     app.delete("/products/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
+      const query = { _id: id };;
       const result = await productsCollection.deleteOne(query);
       res.send(result);
     });
